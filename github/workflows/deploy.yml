@@ -21,13 +21,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject secrets into index.html
+      - name: Inject config into index.html
         run: |
           sed -i "s|__GAS_URL__|${GAS_URL}|g" index.html
-          sed -i "s|__GAS_TOKEN__|${GAS_TOKEN}|g" index.html
+          sed -i "s|__GOOGLE_CLIENT_ID__|${GOOGLE_CLIENT_ID}|g" index.html
         env:
           GAS_URL: ${{ secrets.GAS_URL }}
-          GAS_TOKEN: ${{ secrets.GAS_TOKEN }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
