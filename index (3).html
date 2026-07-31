@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كشف حساب — AMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F4EC;
+    --paper:#FFFEFB;
+    --ink:#1E2A22;
+    --ink-soft:#5B6B5F;
+    --sage:#5F8367;
+    --sage-deep:#3F5B45;
+    --sage-light:#DCE8DC;
+    --blue-band:#DCEEF9;
+    --blue-band-strong:#C7E4F3;
+    --gray-band:#E9E9E7;
+    --gray-band-strong:#D8D8D5;
+    --gold:#F2D24C;
+    --line:#D8D2C0;
+    --danger:#B75150;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(180deg, transparent, transparent 37px, rgba(95,131,103,0.06) 38px),
+      var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Cairo', sans-serif;
+  }
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .brand .mark{
+    width:44px;height:44px;border-radius:10px;
+    background:linear-gradient(160deg, var(--sage), var(--sage-deep));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-family:'Cairo';font-weight:800;font-size:18px;
+    box-shadow:0 4px 10px rgba(63,91,69,0.3);
+  }
+  .brand h1{font-size:22px;margin:0;color:var(--sage-deep);}
+  .brand p{margin:2px 0 0;font-size:13px;color:var(--ink-soft);}
+
+  .seal{
+    background:var(--paper);
+    border:2px solid var(--sage);
+    border-radius:50%;
+    width:112px;height:112px;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    text-align:center;
+    box-shadow:0 6px 16px rgba(63,91,69,0.15);
+    position:relative;
+  }
+  .seal::before{
+    content:'';
+    position:absolute;inset:6px;
+    border:1.5px dashed var(--sage-light);
+    border-radius:50%;
+  }
+  .seal .label{font-size:10px;color:var(--ink-soft);font-weight:600;}
+  .seal .value{font-family:'Cairo';font-weight:800;font-size:17px;color:var(--sage-deep);margin-top:2px;}
+
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    background:var(--sage-light);
+    padding:5px;
+    border-radius:12px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  nav.tabs button{
+    flex:1;
+    min-width:120px;
+    border:none;
+    background:transparent;
+    padding:11px 10px;
+    border-radius:9px;
+    font-family:'IBM Plex Sans Arabic';
+    font-weight:600;
+    font-size:14px;
+    color:var(--sage-deep);
+    cursor:pointer;
+    transition:.15s;
+  }
+  nav.tabs button.active{
+    background:var(--sage-deep);
+    color:#fff;
+    box-shadow:0 3px 8px rgba(63,91,69,0.25);
+  }
+
+  .panel{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    box-shadow:0 2px 12px rgba(30,42,34,0.05);
+  }
+  .panel + .panel{margin-top:18px;}
+  .panel h3{margin:0 0 16px;font-size:16px;color:var(--sage-deep);}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
+  .field input, .field select, .field textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:9px;
+    font-family:inherit;
+    font-size:14px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:2px solid var(--sage);
+    outline-offset:1px;
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:600px){.row2{grid-template-columns:1fr;}}
+
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:-6px;margin-bottom:14px;}
+
+  button.primary{
+    background:var(--sage-deep);
+    color:#fff;
+    border:none;
+    padding:12px 22px;
+    border-radius:9px;
+    font-family:'IBM Plex Sans Arabic';
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:.15s;
+  }
+  button.primary:hover{background:var(--sage);}
+  button.primary:disabled{opacity:.6;cursor:progress;}
+
+  .msg{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;display:none;}
+  .msg.ok{display:block;background:#E4F1E3;color:#2F5C33;}
+  .msg.err{display:block;background:#FBE7E6;color:var(--danger);}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th,td{padding:9px 10px;text-align:center;border:1px solid var(--line);}
+  thead th{background:var(--sage-light);color:var(--sage-deep);font-weight:700;}
+  .tbl-invoices tbody tr:nth-child(even) td{background:var(--blue-band);}
+  .tbl-invoices tbody tr:nth-child(odd) td{background:var(--blue-band-strong);}
+  .tbl-invoices tfoot td{background:var(--sage-light);font-weight:800;color:var(--sage-deep);}
+  .tbl-payments tbody tr:nth-child(even) td{background:var(--gray-band);}
+  .tbl-payments tbody tr:nth-child(odd) td{background:var(--gray-band-strong);}
+  .tbl-payments tbody tr:last-child td.remaining{background:var(--gold);font-weight:800;}
+  .table-scroll{overflow-x:auto;}
+  .section-title{
+    font-family:'Cairo';font-weight:700;font-size:14px;
+    color:var(--sage-deep);margin:22px 0 8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-title::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--sage);}
+
+  .settings-toggle{
+    background:none;border:1px solid var(--line);color:var(--ink-soft);
+    border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:inherit;
+  }
+  .settings-box{margin-top:12px;}
+  .settings-box small{color:var(--ink-soft);display:block;margin-top:6px;line-height:1.7;}
+  footer{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:30px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">AMC</div>
+      <div>
+        <h1>كشف حساب شركة AMC</h1>
+        <p>إدخال الفواتير والدفعات مباشرة إلى جوجل شيت</p>
+      </div>
+    </div>
+    <div class="seal">
+      <span class="label">المتبقي الحالي</span>
+      <span class="value" id="sealValue">—</span>
+    </div>
+  </header>
+
+  <div class="panel" id="settingsPanel">
+    <button class="settings-toggle" id="settingsToggle" type="button">⚙️ إعدادات الاتصال بجوجل شيت</button>
+    <div class="settings-box" id="settingsBox" style="display:none;">
+      <div class="field">
+        <label>رابط Google Apps Script (Web app URL)</label>
+        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
+      </div>
+      <button class="primary" id="saveUrlBtn" type="button">حفظ الرابط</button>
+      <small>
+        هذا الرابط يُحفظ في متصفحك فقط (localStorage) ولا يُرفع إلى GitHub.
+        يمكنك الحصول عليه من: Extensions › Apps Script › Deploy › New deployment › Web app.
+      </small>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button data-tab="invoice" class="active">➕ فاتورة جديدة</button>
+    <button data-tab="payment">➕ دفعة / مرتجع</button>
+    <button data-tab="statement">📋 عرض الكشف</button>
+  </nav>
+
+  <!-- INVOICE TAB -->
+  <section class="panel tab-content" id="tab-invoice">
+    <h3>إضافة فاتورة جديدة</h3>
+    <form id="invoiceForm">
+      <div class="row2">
+        <div class="field">
+          <label>التاريخ</label>
+          <input type="date" id="inv_date" required>
+        </div>
+        <div class="field">
+          <label>فاتورة رقم</label>
+          <input type="text" id="inv_number" placeholder="فاتورة رقم ٢٧" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>اجمالي الفاتورة</label>
+          <input type="number" step="any" id="inv_total" placeholder="مثال: 10350" required>
+        </div>
+        <div class="field">
+          <label>الفئة (نوع السيارة)</label>
+          <input type="text" id="inv_category" placeholder="مثال: لادا جرانتا" required>
+        </div>
+      </div>
+      <button class="primary" type="submit">حفظ الفاتورة</button>
+      <div class="msg" id="invoiceMsg"></div>
+    </form>
+  </section>
+
+  <!-- PAYMENT TAB -->
+  <section class="panel tab-content" id="tab-payment" style="display:none;">
+    <h3>إضافة دفعة أو مرتجع</h3>
+    <form id="paymentForm">
+      <div class="row2">
+        <div class="field">
+          <label>التاريخ</label>
+          <input type="date" id="pay_date" required>
+        </div>
+        <div class="field">
+          <label>دفعة/مرتجع رقم</label>
+          <input type="text" id="pay_label" placeholder="سداد دفعة رقم ١٢  أو  مرتجع (رينو لوجان)" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>قيمة الدفعة/المرتجع</label>
+          <input type="number" step="any" id="pay_amount" placeholder="مثال: 10000" required>
+        </div>
+        <div class="field">
+          <label>ملاحظات (اختياري)</label>
+          <input type="text" id="pay_notes" placeholder="مثال: مراية شمامة">
+        </div>
+      </div>
+      <div class="hint" id="payPreview">المتبقي بعد هذه العملية سيُحسب تلقائيًا عند الحفظ.</div>
+      <button class="primary" type="submit">حفظ العملية</button>
+      <div class="msg" id="paymentMsg"></div>
+    </form>
+  </section>
+
+  <!-- STATEMENT TAB -->
+  <section class="tab-content" id="tab-statement" style="display:none;">
+    <div class="panel">
+      <h3 style="display:flex;justify-content:space-between;align-items:center;">
+        <span>الكشف الحالي</span>
+        <button class="settings-toggle" id="refreshBtn" type="button">↻ تحديث</button>
+      </h3>
+
+      <div class="section-title">جدول الفواتير</div>
+      <div class="table-scroll">
+        <table class="tbl-invoices">
+          <thead><tr><th>التاريخ</th><th>فاتورة رقم</th><th>اجمالي الفاتورة</th><th>الفئة</th></tr></thead>
+          <tbody id="invoicesBody"><tr><td colspan="4">لا توجد بيانات بعد</td></tr></tbody>
+          <tfoot><tr><td colspan="2">إجمالي الفواتير</td><td id="totalInvoicesCell">0</td><td></td></tr></tfoot>
+        </table>
+      </div>
+
+      <div class="section-title">جدول الدفعات والمرتجعات</div>
+      <div class="table-scroll">
+        <table class="tbl-payments">
+          <thead><tr><th>التاريخ</th><th>دفعة/مرتجع رقم</th><th>القيمة</th><th>المتبقي</th><th>ملاحظات</th></tr></thead>
+          <tbody id="paymentsBody"><tr><td colspan="5">لا توجد بيانات بعد</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer>مربوط مباشرة بجوجل شيت عبر Google Apps Script</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let SCRIPT_URL = localStorage.getItem('amc_script_url') || '';
+$('scriptUrl').value = SCRIPT_URL;
+
+$('settingsToggle').addEventListener('click', () => {
+  const box = $('settingsBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+});
+$('saveUrlBtn').addEventListener('click', () => {
+  SCRIPT_URL = $('scriptUrl').value.trim();
+  localStorage.setItem('amc_script_url', SCRIPT_URL);
+  alert('تم حفظ الرابط.');
+});
+
+// tabs
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    $('tab-' + btn.dataset.tab).style.display = 'block';
+    if (btn.dataset.tab === 'statement') loadStatement();
+  });
+});
+
+function formatDateForSheet(isoDate) {
+  // yyyy-mm-dd -> dd/mm/yyyy
+  const [y, m, d] = isoDate.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function ensureUrl() {
+  if (!SCRIPT_URL) {
+    alert('من فضلك أدخل رابط Google Apps Script أولاً من الإعدادات ⚙️ في الأعلى.');
+    return false;
+  }
+  return true;
+}
+
+async function postToSheet(payload) {
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+$('invoiceForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!ensureUrl()) return;
+  const msg = $('invoiceMsg');
+  msg.className = 'msg';
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true;
+  try {
+    const payload = {
+      action: 'invoice',
+      date: formatDateForSheet($('inv_date').value),
+      invoiceLabel: $('inv_number').value.trim(),
+      total: $('inv_total').value,
+      category: $('inv_category').value.trim()
+    };
+    const result = await postToSheet(payload);
+    if (result.ok) {
+      msg.textContent = 'تم حفظ الفاتورة بنجاح ✅';
+      msg.classList.add('ok');
+      e.target.reset();
+    } else {
+      throw new Error(result.error || 'فشل غير معروف');
+    }
+  } catch (err) {
+    msg.textContent = 'حدث خطأ: ' + err.message;
+    msg.classList.add('err');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$('paymentForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!ensureUrl()) return;
+  const msg = $('paymentMsg');
+  msg.className = 'msg';
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true;
+  try {
+    const payload = {
+      action: 'payment',
+      date: formatDateForSheet($('pay_date').value),
+      label: $('pay_label').value.trim(),
+      amount: $('pay_amount').value,
+      notes: $('pay_notes').value.trim()
+    };
+    const result = await postToSheet(payload);
+    if (result.ok) {
+      msg.textContent = `تم الحفظ بنجاح ✅ — المتبقي الجديد: ${Number(result.remaining).toLocaleString('en-US')}`;
+      msg.classList.add('ok');
+      e.target.reset();
+      updateSeal(result.remaining);
+    } else {
+      throw new Error(result.error || 'فشل غير معروف');
+    }
+  } catch (err) {
+    msg.textContent = 'حدث خطأ: ' + err.message;
+    msg.classList.add('err');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function updateSeal(value) {
+  $('sealValue').textContent = Number(value).toLocaleString('en-US');
+}
+
+async function loadStatement() {
+  if (!ensureUrl()) return;
+  const invBody = $('invoicesBody');
+  const payBody = $('paymentsBody');
+  invBody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
+  payBody.innerHTML = '<tr><td colspan="5">جاري التحميل...</td></tr>';
+  try {
+    const res = await fetch(SCRIPT_URL, { method: 'GET' });
+    const data = await res.json();
+
+    invBody.innerHTML = data.invoices.length
+      ? data.invoices.map(r => `<tr>
+          <td>${r['التاريخ']}</td>
+          <td>${r['فاتورة رقم']}</td>
+          <td>${Number(r['اجمالي الفاتورة']).toLocaleString('en-US')}</td>
+          <td>${r['الفئة']}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4">لا توجد فواتير بعد</td></tr>';
+
+    $('totalInvoicesCell').textContent = Number(data.totalInvoices).toLocaleString('en-US');
+
+    payBody.innerHTML = data.payments.length
+      ? data.payments.map(r => `<tr>
+          <td>${r['التاريخ']}</td>
+          <td>${r['دفعة/مرتجع رقم']}</td>
+          <td>${Number(r['قيمة الدفعة/المرتجع']).toLocaleString('en-US')}</td>
+          <td class="remaining">${Number(r['المتبقي']).toLocaleString('en-US')}</td>
+          <td>${r['ملاحظات'] || ''}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="5">لا توجد عمليات بعد</td></tr>';
+
+    updateSeal(data.currentRemaining);
+  } catch (err) {
+    invBody.innerHTML = `<tr><td colspan="4">تعذر تحميل البيانات: ${err.message}</td></tr>`;
+    payBody.innerHTML = '';
+  }
+}
+
+$('refreshBtn').addEventListener('click', loadStatement);
+
+// try loading the seal value on first paint if a URL is already saved
+if (SCRIPT_URL) loadStatement();
+</script>
+</body>
+</html>
