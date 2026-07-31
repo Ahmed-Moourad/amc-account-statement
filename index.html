@@ -6,6 +6,7 @@
 <title>كشف حساب — AMC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     --bg:#F7F4EC;
@@ -188,9 +189,57 @@
   .settings-box{margin-top:12px;}
   .settings-box small{color:var(--ink-soft);display:block;margin-top:6px;line-height:1.7;}
   footer{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:30px;}
+
+  #authGate{
+    position:fixed;inset:0;
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    z-index:100;
+    padding:20px;
+  }
+  .authCard{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:36px 32px;
+    max-width:380px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 8px 24px rgba(30,42,34,0.1);
+  }
+  .authCard .mark{
+    width:56px;height:56px;border-radius:14px;
+    background:linear-gradient(160deg, var(--sage), var(--sage-deep));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-family:'Cairo';font-weight:800;font-size:20px;
+    margin:0 auto 16px;
+  }
+  .authCard h2{font-size:18px;margin:0 0 6px;color:var(--sage-deep);}
+  .authCard p{font-size:13px;color:var(--ink-soft);margin:0 0 20px;line-height:1.7;}
+  #gsiBtn{display:flex;justify-content:center;margin-bottom:14px;}
+  .authCard .authMsg{font-size:12.5px;color:var(--danger);display:none;margin-top:6px;}
+  .userbar{
+    display:flex;align-items:center;gap:8px;
+    font-size:12.5px;color:var(--ink-soft);
+  }
+  .userbar button{
+    border:none;background:none;color:var(--sage-deep);
+    font-weight:700;cursor:pointer;font-family:inherit;font-size:12.5px;
+    text-decoration:underline;
+  }
 </style>
 </head>
 <body>
+<div id="authGate">
+  <div class="authCard">
+    <div class="mark">AMC</div>
+    <h2>تسجيل الدخول مطلوب</h2>
+    <p>سجّل دخولك بحساب جوجل المصرّح له للوصول إلى كشف حساب AMC.</p>
+    <div id="gsiBtn"></div>
+    <div class="authMsg" id="authMsg"></div>
+  </div>
+</div>
+
 <div class="wrap">
 
   <header class="top">
@@ -199,6 +248,10 @@
       <div>
         <h1>كشف حساب شركة AMC</h1>
         <p>إدخال الفواتير والدفعات مباشرة إلى جوجل شيت</p>
+        <div class="userbar" id="userbar" style="display:none;">
+          <span id="userEmail"></span>
+          <button id="signOutBtn" type="button">تسجيل الخروج</button>
+        </div>
       </div>
     </div>
     <div class="seal">
@@ -212,18 +265,15 @@
     <div class="settings-box" id="settingsBox" style="display:none;">
       <div id="configStatus"></div>
       <small>
-        الرابط والمفتاح السري يُحقنان تلقائيًا أثناء النشر عبر GitHub Actions (من GitHub Secrets)،
-        ولا يظهران في كود المشروع على GitHub. راجع README لخطوات الإعداد.
+        الرابط يُحقن تلقائيًا أثناء النشر عبر GitHub Actions (من GitHub Secrets)، ولا يظهر في كود
+        المشروع على GitHub. الحماية الفعلية تتم بتسجيل الدخول بحساب جوجل + قائمة إيميلات مسموح لها
+        محفوظة داخل Apps Script فقط. راجع README لخطوات الإعداد الكاملة.
         <br>
-        للتجربة المحلية فقط (قبل النشر)، يمكنك تعبئة الحقول التالية وسيتم حفظها في متصفحك فقط:
+        للتجربة المحلية فقط (قبل النشر)، يمكنك تعبئة الرابط التالي وسيتم حفظه في متصفحك فقط:
       </small>
       <div class="field" style="margin-top:10px;">
         <label>رابط Web app (تجربة محلية فقط)</label>
         <input type="text" id="scriptUrlOverride" placeholder="https://script.google.com/macros/s/xxxxx/exec">
-      </div>
-      <div class="field">
-        <label>API Token (تجربة محلية فقط)</label>
-        <input type="text" id="tokenOverride" placeholder="نفس القيمة الموجودة في Script Properties">
       </div>
       <button class="primary" id="saveOverrideBtn" type="button">حفظ للتجربة المحلية</button>
     </div>
@@ -327,10 +377,12 @@
 <script>
 const $ = (id) => document.getElementById(id);
 
-// تُستبدل هاتان القيمتان تلقائيًا بواسطة GitHub Actions من GitHub Secrets عند النشر.
-// لو شفتهم لسه بنفس هذا الشكل (__...__) يبقى النشر عبر Actions لسه ما اتظبطش، أو انت بتجرب محليًا.
+// يُستبدل تلقائيًا بواسطة GitHub Actions من GitHub Secrets عند النشر.
+// لو شفته لسه بنفس هذا الشكل (__...__) يبقى النشر عبر Actions لسه ما اتظبطش، أو انت بتجرب محليًا.
 const BAKED_SCRIPT_URL = "__GAS_URL__";
-const BAKED_API_TOKEN = "__GAS_TOKEN__";
+
+// الـ Client ID مش سر — آمن إنه يتحط هنا مباشرة (راجع README لطريقة إنشائه من Google Cloud Console).
+const GOOGLE_CLIENT_ID = "__GOOGLE_CLIENT_ID__";
 
 const isPlaceholder = (v) => !v || v.startsWith('__');
 
@@ -338,11 +390,11 @@ let SCRIPT_URL = isPlaceholder(BAKED_SCRIPT_URL)
   ? (localStorage.getItem('amc_script_url_override') || '')
   : BAKED_SCRIPT_URL;
 
-let API_TOKEN = isPlaceholder(BAKED_API_TOKEN)
-  ? (localStorage.getItem('amc_token_override') || '')
-  : BAKED_API_TOKEN;
-
 const usingLocalOverride = isPlaceholder(BAKED_SCRIPT_URL);
+
+// جلسة تسجيل الدخول تعيش في الذاكرة فقط طول ما الصفحة مفتوحة — لا تُحفظ بعد إغلاق المتصفح.
+let ID_TOKEN = '';
+let USER_EMAIL = '';
 
 function renderConfigStatus() {
   const el = $('configStatus');
@@ -358,11 +410,8 @@ renderConfigStatus();
 
 if (usingLocalOverride) {
   $('scriptUrlOverride').value = SCRIPT_URL;
-  $('tokenOverride').value = API_TOKEN;
 } else {
-  // النشر الحقيقي: نخفي حقول التجربة المحلية لعدم الحاجة إليها
   $('scriptUrlOverride').closest('.field').style.display = 'none';
-  $('tokenOverride').closest('.field').style.display = 'none';
   $('saveOverrideBtn').style.display = 'none';
 }
 
@@ -372,12 +421,69 @@ $('settingsToggle').addEventListener('click', () => {
 });
 $('saveOverrideBtn').addEventListener('click', () => {
   SCRIPT_URL = $('scriptUrlOverride').value.trim();
-  API_TOKEN = $('tokenOverride').value.trim();
   localStorage.setItem('amc_script_url_override', SCRIPT_URL);
-  localStorage.setItem('amc_token_override', API_TOKEN);
   renderConfigStatus();
   alert('تم الحفظ للتجربة المحلية.');
 });
+
+// ---------- تسجيل الدخول بحساب جوجل ----------
+
+function decodeJwtPayload_(jwt) {
+  try {
+    const base64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(escape(atob(base64))));
+  } catch (e) {
+    return {};
+  }
+}
+
+function handleCredentialResponse(response) {
+  ID_TOKEN = response.credential;
+  const payload = decodeJwtPayload_(ID_TOKEN);
+  USER_EMAIL = payload.email || '';
+  $('userEmail').textContent = USER_EMAIL;
+  $('userbar').style.display = 'flex';
+  $('authGate').style.display = 'none';
+  $('authMsg').style.display = 'none';
+  if (SCRIPT_URL) loadStatement();
+}
+
+function initGoogleSignIn() {
+  if (isPlaceholder(GOOGLE_CLIENT_ID)) {
+    $('authMsg').textContent = 'لم يتم ضبط GOOGLE_CLIENT_ID بعد. راجع README لإعداد تسجيل الدخول بجوجل.';
+    $('authMsg').style.display = 'block';
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredentialResponse,
+    auto_select: true
+  });
+  google.accounts.id.renderButton($('gsiBtn'), {
+    theme: 'outline', size: 'large', shape: 'pill', text: 'signin_with'
+  });
+  google.accounts.id.prompt(); // يحاول تسجيل دخول تلقائي لو فيه جلسة جوجل نشطة
+}
+window.addEventListener('load', () => {
+  if (window.google && google.accounts) initGoogleSignIn();
+  else setTimeout(initGoogleSignIn, 400);
+});
+
+$('signOutBtn').addEventListener('click', () => {
+  ID_TOKEN = '';
+  USER_EMAIL = '';
+  if (window.google && google.accounts) google.accounts.id.disableAutoSelect();
+  $('userbar').style.display = 'none';
+  $('authGate').style.display = 'flex';
+});
+
+function requireAuth_() {
+  if (!ID_TOKEN) {
+    $('authGate').style.display = 'flex';
+    return false;
+  }
+  return true;
+}
 
 // tabs
 document.querySelectorAll('nav.tabs button').forEach(btn => {
@@ -399,10 +505,11 @@ function formatDateForSheet(isoDate) {
 function ensureUrl() {
   if (!SCRIPT_URL) {
     alert(usingLocalOverride
-      ? 'من فضلك أدخل رابط Google Apps Script والمفتاح السري من الإعدادات ⚙️ في الأعلى (تجربة محلية).'
+      ? 'من فضلك أدخل رابط Google Apps Script من الإعدادات ⚙️ في الأعلى (تجربة محلية).'
       : 'تعذر العثور على إعدادات الاتصال. تأكد أن GitHub Secrets مضبوطة وأن النشر تم عبر GitHub Actions.');
     return false;
   }
+  if (!requireAuth_()) return false;
   return true;
 }
 
@@ -410,9 +517,15 @@ async function postToSheet(payload) {
   const res = await fetch(SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(Object.assign({ token: API_TOKEN }, payload))
+    body: JSON.stringify(Object.assign({ idToken: ID_TOKEN }, payload))
   });
   return res.json();
+}
+
+function friendlyAuthError(reason) {
+  if (reason === 'forbidden_email') return 'هذا الحساب غير مصرّح له بالدخول لهذا الكشف.';
+  if (reason === 'invalid_token') return 'انتهت جلسة الدخول، سجّل دخولك مرة أخرى.';
+  return reason || 'فشل غير معروف';
 }
 
 $('invoiceForm').addEventListener('submit', async (e) => {
@@ -436,7 +549,7 @@ $('invoiceForm').addEventListener('submit', async (e) => {
       msg.classList.add('ok');
       e.target.reset();
     } else {
-      throw new Error(result.error === 'unauthorized' ? 'المفتاح السري غير صحيح' : (result.error || 'فشل غير معروف'));
+      throw new Error(friendlyAuthError(result.error));
     }
   } catch (err) {
     msg.textContent = 'حدث خطأ: ' + err.message;
@@ -468,7 +581,7 @@ $('paymentForm').addEventListener('submit', async (e) => {
       e.target.reset();
       updateSeal(result.remaining);
     } else {
-      throw new Error(result.error === 'unauthorized' ? 'المفتاح السري غير صحيح' : (result.error || 'فشل غير معروف'));
+      throw new Error(friendlyAuthError(result.error));
     }
   } catch (err) {
     msg.textContent = 'حدث خطأ: ' + err.message;
@@ -489,12 +602,12 @@ async function loadStatement() {
   invBody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
   payBody.innerHTML = '<tr><td colspan="5">جاري التحميل...</td></tr>';
   try {
-    const url = SCRIPT_URL + '?token=' + encodeURIComponent(API_TOKEN);
+    const url = SCRIPT_URL + '?idToken=' + encodeURIComponent(ID_TOKEN);
     const res = await fetch(url, { method: 'GET' });
     const data = await res.json();
 
     if (data.ok === false) {
-      throw new Error(data.error === 'unauthorized' ? 'المفتاح السري غير صحيح' : (data.error || 'خطأ غير معروف'));
+      throw new Error(friendlyAuthError(data.error));
     }
 
     invBody.innerHTML = data.invoices.length
@@ -527,8 +640,6 @@ async function loadStatement() {
 
 $('refreshBtn').addEventListener('click', loadStatement);
 
-// try loading the seal value on first paint if a URL is already saved
-if (SCRIPT_URL) loadStatement();
 </script>
 </body>
 </html>
