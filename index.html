@@ -208,17 +208,24 @@
   </header>
 
   <div class="panel" id="settingsPanel">
-    <button class="settings-toggle" id="settingsToggle" type="button">⚙️ إعدادات الاتصال بجوجل شيت</button>
+    <button class="settings-toggle" id="settingsToggle" type="button">⚙️ حالة الاتصال بجوجل شيت</button>
     <div class="settings-box" id="settingsBox" style="display:none;">
-      <div class="field">
-        <label>رابط Google Apps Script (Web app URL)</label>
-        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
-      </div>
-      <button class="primary" id="saveUrlBtn" type="button">حفظ الرابط</button>
+      <div id="configStatus"></div>
       <small>
-        هذا الرابط يُحفظ في متصفحك فقط (localStorage) ولا يُرفع إلى GitHub.
-        يمكنك الحصول عليه من: Extensions › Apps Script › Deploy › New deployment › Web app.
+        الرابط والمفتاح السري يُحقنان تلقائيًا أثناء النشر عبر GitHub Actions (من GitHub Secrets)،
+        ولا يظهران في كود المشروع على GitHub. راجع README لخطوات الإعداد.
+        <br>
+        للتجربة المحلية فقط (قبل النشر)، يمكنك تعبئة الحقول التالية وسيتم حفظها في متصفحك فقط:
       </small>
+      <div class="field" style="margin-top:10px;">
+        <label>رابط Web app (تجربة محلية فقط)</label>
+        <input type="text" id="scriptUrlOverride" placeholder="https://script.google.com/macros/s/xxxxx/exec">
+      </div>
+      <div class="field">
+        <label>API Token (تجربة محلية فقط)</label>
+        <input type="text" id="tokenOverride" placeholder="نفس القيمة الموجودة في Script Properties">
+      </div>
+      <button class="primary" id="saveOverrideBtn" type="button">حفظ للتجربة المحلية</button>
     </div>
   </div>
 
@@ -319,17 +326,57 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-let SCRIPT_URL = localStorage.getItem('amc_script_url') || '';
-$('scriptUrl').value = SCRIPT_URL;
+
+// تُستبدل هاتان القيمتان تلقائيًا بواسطة GitHub Actions من GitHub Secrets عند النشر.
+// لو شفتهم لسه بنفس هذا الشكل (__...__) يبقى النشر عبر Actions لسه ما اتظبطش، أو انت بتجرب محليًا.
+const BAKED_SCRIPT_URL = "__GAS_URL__";
+const BAKED_API_TOKEN = "__GAS_TOKEN__";
+
+const isPlaceholder = (v) => !v || v.startsWith('__');
+
+let SCRIPT_URL = isPlaceholder(BAKED_SCRIPT_URL)
+  ? (localStorage.getItem('amc_script_url_override') || '')
+  : BAKED_SCRIPT_URL;
+
+let API_TOKEN = isPlaceholder(BAKED_API_TOKEN)
+  ? (localStorage.getItem('amc_token_override') || '')
+  : BAKED_API_TOKEN;
+
+const usingLocalOverride = isPlaceholder(BAKED_SCRIPT_URL);
+
+function renderConfigStatus() {
+  const el = $('configStatus');
+  if (!usingLocalOverride) {
+    el.innerHTML = '<span style="color:#2F5C33;font-weight:700;">✅ متصل عبر إعدادات النشر (GitHub Secrets)</span>';
+  } else if (SCRIPT_URL) {
+    el.innerHTML = '<span style="color:#8A6D1E;font-weight:700;">⚠️ وضع تجربة محلية — لم يتم النشر عبر GitHub Actions بعد</span>';
+  } else {
+    el.innerHTML = '<span style="color:#B75150;font-weight:700;">✖ غير متصل بعد</span>';
+  }
+}
+renderConfigStatus();
+
+if (usingLocalOverride) {
+  $('scriptUrlOverride').value = SCRIPT_URL;
+  $('tokenOverride').value = API_TOKEN;
+} else {
+  // النشر الحقيقي: نخفي حقول التجربة المحلية لعدم الحاجة إليها
+  $('scriptUrlOverride').closest('.field').style.display = 'none';
+  $('tokenOverride').closest('.field').style.display = 'none';
+  $('saveOverrideBtn').style.display = 'none';
+}
 
 $('settingsToggle').addEventListener('click', () => {
   const box = $('settingsBox');
   box.style.display = box.style.display === 'none' ? 'block' : 'none';
 });
-$('saveUrlBtn').addEventListener('click', () => {
-  SCRIPT_URL = $('scriptUrl').value.trim();
-  localStorage.setItem('amc_script_url', SCRIPT_URL);
-  alert('تم حفظ الرابط.');
+$('saveOverrideBtn').addEventListener('click', () => {
+  SCRIPT_URL = $('scriptUrlOverride').value.trim();
+  API_TOKEN = $('tokenOverride').value.trim();
+  localStorage.setItem('amc_script_url_override', SCRIPT_URL);
+  localStorage.setItem('amc_token_override', API_TOKEN);
+  renderConfigStatus();
+  alert('تم الحفظ للتجربة المحلية.');
 });
 
 // tabs
@@ -351,7 +398,9 @@ function formatDateForSheet(isoDate) {
 
 function ensureUrl() {
   if (!SCRIPT_URL) {
-    alert('من فضلك أدخل رابط Google Apps Script أولاً من الإعدادات ⚙️ في الأعلى.');
+    alert(usingLocalOverride
+      ? 'من فضلك أدخل رابط Google Apps Script والمفتاح السري من الإعدادات ⚙️ في الأعلى (تجربة محلية).'
+      : 'تعذر العثور على إعدادات الاتصال. تأكد أن GitHub Secrets مضبوطة وأن النشر تم عبر GitHub Actions.');
     return false;
   }
   return true;
@@ -361,7 +410,7 @@ async function postToSheet(payload) {
   const res = await fetch(SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(Object.assign({ token: API_TOKEN }, payload))
   });
   return res.json();
 }
@@ -387,7 +436,7 @@ $('invoiceForm').addEventListener('submit', async (e) => {
       msg.classList.add('ok');
       e.target.reset();
     } else {
-      throw new Error(result.error || 'فشل غير معروف');
+      throw new Error(result.error === 'unauthorized' ? 'المفتاح السري غير صحيح' : (result.error || 'فشل غير معروف'));
     }
   } catch (err) {
     msg.textContent = 'حدث خطأ: ' + err.message;
@@ -419,7 +468,7 @@ $('paymentForm').addEventListener('submit', async (e) => {
       e.target.reset();
       updateSeal(result.remaining);
     } else {
-      throw new Error(result.error || 'فشل غير معروف');
+      throw new Error(result.error === 'unauthorized' ? 'المفتاح السري غير صحيح' : (result.error || 'فشل غير معروف'));
     }
   } catch (err) {
     msg.textContent = 'حدث خطأ: ' + err.message;
@@ -440,8 +489,13 @@ async function loadStatement() {
   invBody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
   payBody.innerHTML = '<tr><td colspan="5">جاري التحميل...</td></tr>';
   try {
-    const res = await fetch(SCRIPT_URL, { method: 'GET' });
+    const url = SCRIPT_URL + '?token=' + encodeURIComponent(API_TOKEN);
+    const res = await fetch(url, { method: 'GET' });
     const data = await res.json();
+
+    if (data.ok === false) {
+      throw new Error(data.error === 'unauthorized' ? 'المفتاح السري غير صحيح' : (data.error || 'خطأ غير معروف'));
+    }
 
     invBody.innerHTML = data.invoices.length
       ? data.invoices.map(r => `<tr>
