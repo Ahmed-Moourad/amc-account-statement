@@ -495,6 +495,14 @@ window.addEventListener('load', () => {
   else setTimeout(initGoogleSignIn, 400);
 });
 
+// تجديد صامت للتوكن كل 45 دقيقة (قبل انتهاء صلاحيته الافتراضية ~ساعة)،
+// طالما جلسة جوجل في المتصفح لسه شغالة، من غير ما يحتاج المستخدم يعمل حاجة.
+setInterval(() => {
+  if (window.google && google.accounts && ID_TOKEN) {
+    google.accounts.id.prompt();
+  }
+}, 45 * 60 * 1000);
+
 $('signOutBtn').addEventListener('click', () => {
   ID_TOKEN = '';
   USER_EMAIL = '';
@@ -520,6 +528,18 @@ function friendlyAuthError(reason) {
   if (reason === 'invalid_token') return 'انتهت جلسة الدخول، سجّل دخولك مرة أخرى.';
   if (reason === 'missing_company') return 'من فضلك اختر الشركة أولاً.';
   return reason || 'فشل غير معروف';
+}
+
+// عند انتهاء صلاحية التوكن، بنمسحه ونرجّع شاشة تسجيل الدخول عشان المستخدم
+// يقدر يسجّل دخوله تاني بضغطة واحدة، بدل ما يفضل يشوف رسالة خطأ نصية بس.
+function handleAuthError(reason) {
+  if (reason === 'invalid_token') {
+    ID_TOKEN = '';
+    $('authMsg').textContent = 'انتهت جلسة الدخول، سجّل دخولك مرة أخرى.';
+    $('authMsg').style.display = 'block';
+    $('authGate').style.display = 'flex';
+  }
+  return friendlyAuthError(reason);
 }
 
 // ---------- طلبات الشيت ----------
@@ -561,7 +581,7 @@ async function loadCompanies() {
   if (!requireAuth_()) return;
   try {
     const data = await getFromSheet({ action: 'companies' });
-    if (data.ok === false) throw new Error(friendlyAuthError(data.error));
+    if (data.ok === false) throw new Error(handleAuthError(data.error));
     COMPANIES = data.companies || [];
     if (SELECTED_COMPANY && !COMPANIES.includes(SELECTED_COMPANY)) SELECTED_COMPANY = '';
     if (!SELECTED_COMPANY && COMPANIES.length) SELECTED_COMPANY = COMPANIES[0];
@@ -594,7 +614,7 @@ $('createCompanyBtn').addEventListener('click', async () => {
   btn.disabled = true;
   try {
     const result = await postToSheet({ action: 'createCompany', name });
-    if (result.ok === false) throw new Error(friendlyAuthError(result.error));
+    if (result.ok === false) throw new Error(handleAuthError(result.error));
     COMPANIES = result.companies || COMPANIES.concat([result.company]);
     SELECTED_COMPANY = result.company;
     localStorage.setItem('amc_selected_company', SELECTED_COMPANY);
@@ -642,7 +662,7 @@ $('invoiceForm').addEventListener('submit', async (e) => {
       msg.classList.add('ok');
       e.target.reset();
     } else {
-      throw new Error(friendlyAuthError(result.error));
+      throw new Error(handleAuthError(result.error));
     }
   } catch (err) {
     msg.textContent = 'حدث خطأ: ' + err.message;
@@ -677,7 +697,7 @@ $('paymentForm').addEventListener('submit', async (e) => {
       e.target.reset();
       updateSeal(result.remaining);
     } else {
-      throw new Error(friendlyAuthError(result.error));
+      throw new Error(handleAuthError(result.error));
     }
   } catch (err) {
     msg.textContent = 'حدث خطأ: ' + err.message;
@@ -710,7 +730,7 @@ async function loadStatement() {
   try {
     const data = await getFromSheet({ action: 'statement', company: SELECTED_COMPANY });
 
-    if (data.ok === false) throw new Error(friendlyAuthError(data.error));
+    if (data.ok === false) throw new Error(handleAuthError(data.error));
 
     invBody.innerHTML = data.invoices.length
       ? data.invoices.map(r => `<tr>
