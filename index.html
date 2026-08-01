@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>كشف حساب — AMC</title>
+<title>كشف حساب — الشركات</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -60,8 +60,10 @@
     width:44px;height:44px;border-radius:10px;
     background:linear-gradient(160deg, var(--sage), var(--sage-deep));
     display:flex;align-items:center;justify-content:center;
-    color:#fff;font-family:'Cairo';font-weight:800;font-size:18px;
+    color:#fff;font-family:'Cairo';font-weight:800;font-size:15px;
     box-shadow:0 4px 10px rgba(63,91,69,0.3);
+    text-align:center;
+    line-height:1.1;
   }
   .brand h1{font-size:22px;margin:0;color:var(--sage-deep);}
   .brand p{margin:2px 0 0;font-size:13px;color:var(--ink-soft);}
@@ -85,6 +87,57 @@
   }
   .seal .label{font-size:10px;color:var(--ink-soft);font-weight:600;}
   .seal .value{font-family:'Cairo';font-weight:800;font-size:17px;color:var(--sage-deep);margin-top:2px;}
+
+  .company-bar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .company-bar label{font-size:13px;font-weight:700;color:var(--sage-deep);white-space:nowrap;}
+  .company-bar select{
+    flex:1;
+    min-width:160px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-family:inherit;
+    font-size:14px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .company-bar button{
+    border:1px solid var(--sage);
+    background:#fff;
+    color:var(--sage-deep);
+    padding:9px 14px;
+    border-radius:8px;
+    font-family:'IBM Plex Sans Arabic';
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .company-bar button:hover{background:var(--sage-light);}
+  .new-company-box{
+    display:none;
+    width:100%;
+    gap:8px;
+    margin-top:10px;
+  }
+  .new-company-box input{
+    flex:1;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-family:inherit;
+    font-size:14px;
+  }
 
   nav.tabs{
     display:flex;
@@ -145,6 +198,7 @@
   @media (max-width:600px){.row2{grid-template-columns:1fr;}}
 
   .hint{font-size:12px;color:var(--ink-soft);margin-top:-6px;margin-bottom:14px;}
+  .empty-state{font-size:13px;color:var(--ink-soft);text-align:center;padding:10px 0;}
 
   button.primary{
     background:var(--sage-deep);
@@ -186,8 +240,6 @@
     background:none;border:1px solid var(--line);color:var(--ink-soft);
     border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:inherit;
   }
-  .settings-box{margin-top:12px;}
-  .settings-box small{color:var(--ink-soft);display:block;margin-top:6px;line-height:1.7;}
   footer{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:30px;}
 
   #authGate{
@@ -234,7 +286,7 @@
   <div class="authCard">
     <div class="mark">AMC</div>
     <h2>تسجيل الدخول مطلوب</h2>
-    <p>سجّل دخولك بحساب جوجل المصرّح له للوصول إلى كشف حساب AMC.</p>
+    <p>سجّل دخولك بحساب جوجل المصرّح له للوصول إلى كشوف حسابات الشركات.</p>
     <div id="gsiBtn"></div>
     <div class="authMsg" id="authMsg"></div>
   </div>
@@ -244,10 +296,10 @@
 
   <header class="top">
     <div class="brand">
-      <div class="mark">AMC</div>
+      <div class="mark" id="brandMark">···</div>
       <div>
-        <h1>كشف حساب شركة AMC</h1>
-        <p>إدخال الفواتير والدفعات مباشرة إلى جوجل شيت</p>
+        <h1>كشف حساب</h1>
+        <p id="brandSubtitle">اختر شركة من القائمة للبدء</p>
         <div class="userbar" id="userbar" style="display:none;">
           <span id="userEmail"></span>
           <button id="signOutBtn" type="button">تسجيل الخروج</button>
@@ -260,22 +312,15 @@
     </div>
   </header>
 
-  <div class="panel" id="settingsPanel">
-    <button class="settings-toggle" id="settingsToggle" type="button">⚙️ حالة الاتصال بجوجل شيت</button>
-    <div class="settings-box" id="settingsBox" style="display:none;">
-      <div id="configStatus"></div>
-      <small>
-        الرابط يُحقن تلقائيًا أثناء النشـر عبر GitHub Actions (من GitHub Secrets)، ولا يظهر في كود
-        المشروع على GitHub. الحماية الفعلية تتم بتسجيل الدخول بحساب جوجل + قائمة إيميلات مسموح لها
-        محفوظة داخل Apps Script فقط. راجع README لخطوات الإعداد الكاملة.
-        <br>
-        للتجربة المحليه فقط (قبل النشر)، يمكنك تعبئة الرابط التالي وسيتم حفظه في متصفحك فقط:
-      </small>
-      <div class="field" style="margin-top:10px;">
-        <label>رابط Web app (تجربة محلية فقط)</label>
-        <input type="text" id="scriptUrlOverride" placeholder="https://script.google.com/macros/s/xxxxx/exec">
-      </div>
-      <button class="primary" id="saveOverrideBtn" type="button">حفظ للتجربة المحلية</button>
+  <div class="company-bar">
+    <label>الشركة:</label>
+    <select id="companySelect">
+      <option value="">— اختر شركة —</option>
+    </select>
+    <button id="newCompanyToggle" type="button">+ شركة جديدة</button>
+    <div class="new-company-box" id="newCompanyBox">
+      <input type="text" id="newCompanyName" placeholder="اسم الشركة الجديدة">
+      <button class="primary" id="createCompanyBtn" type="button" style="padding:9px 16px;">إنشاء</button>
     </div>
   </div>
 
@@ -338,7 +383,7 @@
           <input type="text" id="pay_notes" placeholder="مثال: مراية شمامة">
         </div>
       </div>
-      <div class="hint" id="payPreview">المتبقي بعد هذه العملية سيُحسب تلقائيًا عند الحفظ.</div>
+      <div class="hint">المتبقي بعد هذه العملية سيُحسب تلقائيًا عند الحفظ.</div>
       <button class="primary" type="submit">حفظ العملية</button>
       <div class="msg" id="paymentMsg"></div>
     </form>
@@ -378,53 +423,34 @@
 const $ = (id) => document.getElementById(id);
 
 // يُستبدل تلقائيًا بواسطة GitHub Actions من GitHub Secrets عند النشر.
-// لو شفته لسه بنفس هذا الشكل (__...__) يبقى النشر عبر Actions لسه ما اتظبطش، أو انت بتجرب محليًا.
-const BAKED_SCRIPT_URL = "__GAS_URL__";
-
-// الـ Client ID مش سر — آمن إنه يتحط هنا مباشرة (راجع README لطريقة إنشائه من Google Cloud Console).
+const SCRIPT_URL = "__GAS_URL__";
 const GOOGLE_CLIENT_ID = "__GOOGLE_CLIENT_ID__";
 
 const isPlaceholder = (v) => !v || v.startsWith('__');
-
-let SCRIPT_URL = isPlaceholder(BAKED_SCRIPT_URL)
-  ? (localStorage.getItem('amc_script_url_override') || '')
-  : BAKED_SCRIPT_URL;
-
-const usingLocalOverride = isPlaceholder(BAKED_SCRIPT_URL);
 
 // جلسة تسجيل الدخول تعيش في الذاكرة فقط طول ما الصفحة مفتوحة — لا تُحفظ بعد إغلاق المتصفح.
 let ID_TOKEN = '';
 let USER_EMAIL = '';
 
-function renderConfigStatus() {
-  const el = $('configStatus');
-  if (!usingLocalOverride) {
-    el.innerHTML = '<span style="color:#2F5C33;font-weight:700;">✅ متصل عبر إعدادات النشر (GitHub Secrets)</span>';
-  } else if (SCRIPT_URL) {
-    el.innerHTML = '<span style="color:#8A6D1E;font-weight:700;">⚠️ وضع تجربة محلية — لم يتم النشر عبر GitHub Actions بعد</span>';
-  } else {
-    el.innerHTML = '<span style="color:#B75150;font-weight:700;">✖ غير متصل بعد</span>';
-  }
-}
-renderConfigStatus();
+// الشركة المختارة تُحفظ في المتصفح فقط لتسهيل الرجوع لها في المرة القادمة.
+let COMPANIES = [];
+let SELECTED_COMPANY = localStorage.getItem('amc_selected_company') || '';
 
-if (usingLocalOverride) {
-  $('scriptUrlOverride').value = SCRIPT_URL;
-} else {
-  $('scriptUrlOverride').closest('.field').style.display = 'none';
-  $('saveOverrideBtn').style.display = 'none';
-}
+// ---------- تبويبات ----------
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    $('tab-' + btn.dataset.tab).style.display = 'block';
+    if (btn.dataset.tab === 'statement') loadStatement();
+  });
+});
 
-$('settingsToggle').addEventListener('click', () => {
-  const box = $('settingsBox');
-  box.style.display = box.style.display === 'none' ? 'block' : 'none';
-});
-$('saveOverrideBtn').addEventListener('click', () => {
-  SCRIPT_URL = $('scriptUrlOverride').value.trim();
-  localStorage.setItem('amc_script_url_override', SCRIPT_URL);
-  renderConfigStatus();
-  alert('تم الحفظ للتجربة المحلية.');
-});
+function formatDateForSheet(isoDate) {
+  const [y, m, d] = isoDate.split('-');
+  return `${d}/${m}/${y}`;
+}
 
 // ---------- تسجيل الدخول بحساب جوجل ----------
 
@@ -445,7 +471,7 @@ function handleCredentialResponse(response) {
   $('userbar').style.display = 'flex';
   $('authGate').style.display = 'none';
   $('authMsg').style.display = 'none';
-  if (SCRIPT_URL) loadStatement();
+  loadCompanies();
 }
 
 function initGoogleSignIn() {
@@ -462,7 +488,7 @@ function initGoogleSignIn() {
   google.accounts.id.renderButton($('gsiBtn'), {
     theme: 'outline', size: 'large', shape: 'pill', text: 'signin_with'
   });
-  google.accounts.id.prompt(); // يحاول تسجيل دخول تلقائي لو فيه جلسة جوجل نشطة
+  google.accounts.id.prompt();
 }
 window.addEventListener('load', () => {
   if (window.google && google.accounts) initGoogleSignIn();
@@ -482,36 +508,21 @@ function requireAuth_() {
     $('authGate').style.display = 'flex';
     return false;
   }
-  return true;
-}
-
-// tabs
-document.querySelectorAll('nav.tabs button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-    $('tab-' + btn.dataset.tab).style.display = 'block';
-    if (btn.dataset.tab === 'statement') loadStatement();
-  });
-});
-
-function formatDateForSheet(isoDate) {
-  // yyyy-mm-dd -> dd/mm/yyyy
-  const [y, m, d] = isoDate.split('-');
-  return `${d}/${m}/${y}`;
-}
-
-function ensureUrl() {
-  if (!SCRIPT_URL) {
-    alert(usingLocalOverride
-      ? 'من فضلك أدخل رابط Google Apps Script من الإعدادات ⚙️ في الأعلى (تجربة محلية).'
-      : 'تعذر العثور على إعدادات الاتصال. تأكد أن GitHub Secrets مضبوطة وأن النشر تم عبر GitHub Actions.');
+  if (isPlaceholder(SCRIPT_URL)) {
+    alert('لم يتم ضبط رابط جوجل شيت بعد (GAS_URL) — راجع README.');
     return false;
   }
-  if (!requireAuth_()) return false;
   return true;
 }
+
+function friendlyAuthError(reason) {
+  if (reason === 'forbidden_email') return 'هذا الحساب غير مصرّح له بالدخول لهذا الكشف.';
+  if (reason === 'invalid_token') return 'انتهت جلسة الدخول، سجّل دخولك مرة أخرى.';
+  if (reason === 'missing_company') return 'من فضلك اختر الشركة أولاً.';
+  return reason || 'فشل غير معروف';
+}
+
+// ---------- طلبات الشيت ----------
 
 async function postToSheet(payload) {
   const res = await fetch(SCRIPT_URL, {
@@ -522,15 +533,96 @@ async function postToSheet(payload) {
   return res.json();
 }
 
-function friendlyAuthError(reason) {
-  if (reason === 'forbidden_email') return 'هذا الحساب غير مصرّح له بالدخول لهذا الكشف.';
-  if (reason === 'invalid_token') return 'انتهت جلسة الدخول، سجّل دخولك مرة أخرى.';
-  return reason || 'فشل غير معروف';
+async function getFromSheet(params) {
+  const qs = new URLSearchParams(Object.assign({ idToken: ID_TOKEN }, params)).toString();
+  const res = await fetch(SCRIPT_URL + '?' + qs, { method: 'GET' });
+  return res.json();
 }
+
+// ---------- إدارة الشركات ----------
+
+function renderCompanySelect() {
+  const sel = $('companySelect');
+  sel.innerHTML = '<option value="">— اختر شركة —</option>' +
+    COMPANIES.map(c => `<option value="${c}" ${c === SELECTED_COMPANY ? 'selected' : ''}>${c}</option>`).join('');
+}
+
+function updateBrand() {
+  if (SELECTED_COMPANY) {
+    $('brandMark').textContent = SELECTED_COMPANY.slice(0, 3).toUpperCase();
+    $('brandSubtitle').textContent = 'كشف حساب شركة ' + SELECTED_COMPANY;
+  } else {
+    $('brandMark').textContent = '···';
+    $('brandSubtitle').textContent = 'اختر شركة من القائمة للبدء';
+  }
+}
+
+async function loadCompanies() {
+  if (!requireAuth_()) return;
+  try {
+    const data = await getFromSheet({ action: 'companies' });
+    if (data.ok === false) throw new Error(friendlyAuthError(data.error));
+    COMPANIES = data.companies || [];
+    if (SELECTED_COMPANY && !COMPANIES.includes(SELECTED_COMPANY)) SELECTED_COMPANY = '';
+    if (!SELECTED_COMPANY && COMPANIES.length) SELECTED_COMPANY = COMPANIES[0];
+    localStorage.setItem('amc_selected_company', SELECTED_COMPANY);
+    renderCompanySelect();
+    updateBrand();
+    if (SELECTED_COMPANY) loadStatement();
+  } catch (err) {
+    alert('تعذر تحميل قائمة الشركات: ' + err.message);
+  }
+}
+
+$('companySelect').addEventListener('change', (e) => {
+  SELECTED_COMPANY = e.target.value;
+  localStorage.setItem('amc_selected_company', SELECTED_COMPANY);
+  updateBrand();
+  if (SELECTED_COMPANY) loadStatement();
+});
+
+$('newCompanyToggle').addEventListener('click', () => {
+  const box = $('newCompanyBox');
+  box.style.display = box.style.display === 'none' || !box.style.display ? 'flex' : 'none';
+});
+
+$('createCompanyBtn').addEventListener('click', async () => {
+  if (!requireAuth_()) return;
+  const name = $('newCompanyName').value.trim();
+  if (!name) { alert('اكتب اسم الشركة أولاً.'); return; }
+  const btn = $('createCompanyBtn');
+  btn.disabled = true;
+  try {
+    const result = await postToSheet({ action: 'createCompany', name });
+    if (result.ok === false) throw new Error(friendlyAuthError(result.error));
+    COMPANIES = result.companies || COMPANIES.concat([result.company]);
+    SELECTED_COMPANY = result.company;
+    localStorage.setItem('amc_selected_company', SELECTED_COMPANY);
+    renderCompanySelect();
+    updateBrand();
+    $('newCompanyName').value = '';
+    $('newCompanyBox').style.display = 'none';
+    loadStatement();
+  } catch (err) {
+    alert('تعذر إنشاء الشركة: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function ensureCompanySelected() {
+  if (!SELECTED_COMPANY) {
+    alert('من فضلك اختر شركة (أو أنشئ شركة جديدة) من الأعلى قبل المتابعة.');
+    return false;
+  }
+  return true;
+}
+
+// ---------- الفواتير ----------
 
 $('invoiceForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!ensureUrl()) return;
+  if (!requireAuth_() || !ensureCompanySelected()) return;
   const msg = $('invoiceMsg');
   msg.className = 'msg';
   const btn = e.target.querySelector('button[type=submit]');
@@ -538,6 +630,7 @@ $('invoiceForm').addEventListener('submit', async (e) => {
   try {
     const payload = {
       action: 'invoice',
+      company: SELECTED_COMPANY,
       date: formatDateForSheet($('inv_date').value),
       invoiceLabel: $('inv_number').value.trim(),
       total: $('inv_total').value,
@@ -559,9 +652,11 @@ $('invoiceForm').addEventListener('submit', async (e) => {
   }
 });
 
+// ---------- الدفعات والمرتجعات ----------
+
 $('paymentForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!ensureUrl()) return;
+  if (!requireAuth_() || !ensureCompanySelected()) return;
   const msg = $('paymentMsg');
   msg.className = 'msg';
   const btn = e.target.querySelector('button[type=submit]');
@@ -569,6 +664,7 @@ $('paymentForm').addEventListener('submit', async (e) => {
   try {
     const payload = {
       action: 'payment',
+      company: SELECTED_COMPANY,
       date: formatDateForSheet($('pay_date').value),
       label: $('pay_label').value.trim(),
       amount: $('pay_amount').value,
@@ -595,20 +691,26 @@ function updateSeal(value) {
   $('sealValue').textContent = Number(value).toLocaleString('en-US');
 }
 
+// ---------- عرض الكشف ----------
+
 async function loadStatement() {
-  if (!ensureUrl()) return;
+  if (!requireAuth_()) return;
   const invBody = $('invoicesBody');
   const payBody = $('paymentsBody');
+
+  if (!SELECTED_COMPANY) {
+    invBody.innerHTML = '<tr><td colspan="4" class="empty-state">اختر شركة أولاً لعرض الكشف</td></tr>';
+    payBody.innerHTML = '<tr><td colspan="5" class="empty-state">اختر شركة أولاً لعرض الكشف</td></tr>';
+    updateSeal(0);
+    return;
+  }
+
   invBody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
   payBody.innerHTML = '<tr><td colspan="5">جاري التحميل...</td></tr>';
   try {
-    const url = SCRIPT_URL + '?idToken=' + encodeURIComponent(ID_TOKEN);
-    const res = await fetch(url, { method: 'GET' });
-    const data = await res.json();
+    const data = await getFromSheet({ action: 'statement', company: SELECTED_COMPANY });
 
-    if (data.ok === false) {
-      throw new Error(friendlyAuthError(data.error));
-    }
+    if (data.ok === false) throw new Error(friendlyAuthError(data.error));
 
     invBody.innerHTML = data.invoices.length
       ? data.invoices.map(r => `<tr>
@@ -639,7 +741,6 @@ async function loadStatement() {
 }
 
 $('refreshBtn').addEventListener('click', loadStatement);
-
 </script>
 </body>
 </html>
